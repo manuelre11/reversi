@@ -29,7 +29,8 @@ socket.on('log', function(array){
 	console.log.apply(console,array);
 });
 
-socket.on('join_room_response', function(payload){ // fails when it comes back to here
+socket.on('join_room_response', function(payload){ // Join room response
+	console.log("here");
 	if (payload.result == 'fail'){
 		alert(payload.message);
 		return;
@@ -37,6 +38,24 @@ socket.on('join_room_response', function(payload){ // fails when it comes back t
 	$('#messages').append('<p>New user joined the room: '+payload.username+'</p>');
 });
 
+socket.on('send_message_response', function(payload){ // Send message response
+	console.log("here");
+	if (payload.result == 'fail'){
+		alert(payload.message);
+		return;
+	}
+	$('#messages').append('<p><b>'+payload.username+' says:</b> '+payload.message+'</p>');
+});
+
+
+function send_message(){ // setting up the message variable with content
+	var payload = {};
+	payload.room = chat_room;
+	payload.username = username;
+	payload.message = $('#send_message_holder').val();
+	console.log('*** Client Log Message: \'send_message\' payload: '+JSON.stringify(payload));
+	socket.emit('send_message', payload);
+}
 
 $(function(){
 	var payload = {};
