@@ -240,7 +240,7 @@ socket.on('game_start_response', function(payload){ // unInvited
 	$('.socket_'+payload.socket_id+' button').replaceWith(newNode);
 	
 	/* Jump to a new page */
-	window.location.href = 'game.html?username' + username + '&game_id='+payload.game_id;
+	window.location.href = 'game.html?username=' + username + '&game_id='+payload.game_id;
 });
 
 
@@ -315,10 +315,70 @@ $(function(){
 	socket.emit('join_room', payload);
 });
 
+var old_board = [
+	['?','?','?','?','?','?','?','?',],
+	['?','?','?','?','?','?','?','?',],
+	['?','?','?','?','?','?','?','?',],
+	['?','?','?','?','?','?','?','?',],
+	['?','?','?','?','?','?','?','?',],
+	['?','?','?','?','?','?','?','?',],
+	['?','?','?','?','?','?','?','?',],
+	['?','?','?','?','?','?','?','?',]
+];
 
+socket.on('game_update', function(payload){
+	console.log('*** Client Log Message: \'game_update\' \n\tpayload: '+JSON.stringify(payload));
+	// Check for a good board update
+	if (payload.result === 'fail') {
+		console.log(payload.message);
+		window.location.href = 'lobby.html?username='+username;
+		return;
+	}
+	// Check for a good board in payload
+	var board = payload.game.board;
+	if ('undefined' === typeof board || !board){
+		console.log('Internal error: received a malformed board update from the server');
+		return;
+	}
 
-
-
+	// update my color
+	
+	// Animate changes to the board
+	
+	var row, column;
+	for(row=0; row<8; row++){
+		for (column=0; column<8; column++){
+			// if a board space has changed
+			if (old_board[row][column] !== board[row][column]){
+				if (old_board[row][column] === '?' && board[row][column] === ' ') {
+					$('#'+row+'_'+column).html('<img src="assets/images/empty.gif" alt="empty square"/>');
+				}
+				else if (old_board[row][column] === '?' && board[row][column] === 'w') {
+					$('#'+row+'_'+column).html('<img src="assets/images/empty_to_white.gif" alt="white square">');
+				}
+				else if (old_board[row][column] === '?' && board[row][column] === 'b'){
+					$('#'+row+'_'+column).html('<img src="assets/images/empty_to_black.gif" alt="black square">');
+				}
+				else if (old_board[row][column] === ' ' && board[row][column] === 'w') {
+					$('#'+row+'_'+column).html('<img src="assets/images/white_to_empty.gif" alt="empty square">');
+				}
+				else if (old_board[row][column] === ' ' && board[row][column] === 'b'){
+					$('#'+row+'_'+column).html('<img src="assets/images/black_to_empty.gif" alt="empty square">');
+				}
+				else if (old_board[row][column] === ' ' && board[row][column] === 'w') {
+					$('#'+row+'_'+column).html('<img src="assets/images/white_to_black.gif" alt="black square">');
+				}
+				else if (old_board[row][column] === ' ' && board[row][column] === 'b'){
+					$('#'+row+'_'+column).html('<img src="assets/images/black_to_white.gif" alt="white square">');
+				}
+				else {
+					$('#'+row+'_'+column).html('<img src="assets/images/error.gif" alt="white square"> alt="error"/>');
+				}
+			}
+		}
+	}
+	old_board = board;
+});
 
 
 

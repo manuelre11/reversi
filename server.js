@@ -123,6 +123,7 @@ io.sockets.on('connection', function(socket){
 		players[socket.id] = {};
 		players[socket.id].username = username;
 		players[socket.id].room = room;
+		console.log(players[socket.id].room);
 		
 		/* Actually have the user join the room */
 		socket.join(room);
@@ -154,9 +155,14 @@ io.sockets.on('connection', function(socket){
 		
 		log('join_room success');
 		
+		if (room !== 'lobby') {
+				send_game_update(socket, room, 'initial update');
+		}
+		
 	});
 	
 	// Leave Room
+	// when a web page disconnects alert everyone
 	socket.on('disconnect', function(){
 		
 		log('client disconnected '+JSON.stringify(players[socket.id]));
@@ -374,7 +380,7 @@ io.sockets.on('connection', function(socket){
 	socket.on('uninvite', function(payload){
 		log('uninvite with ' + JSON.stringify(payload));
 		
-		/* Check to make sure that a payload was sent */
+		// Check to make sure that a payload was sent
 		if(('undefined' === typeof payload) || !payload){
 		   var error_message = 'uninvite had no payload, command aborted';
 			log(error_message);
@@ -385,7 +391,7 @@ io.sockets.on('connection', function(socket){
 			return;
 		}		
 		
-		/* Check that the message can be traced to a username */
+		// Check that the message can be traced to a username
 		var username = players[socket.id].username;
 		if (('undefined' === typeof username) || !username) {
 			var error_message = 'uninvite can\'t identify who sent the message.';
@@ -410,7 +416,8 @@ io.sockets.on('connection', function(socket){
 		
 		var room = players[socket.id].room;
 		var roomObject = io.sockets.adapter.rooms[room];
-		/* Make sure the user being invited is in the room */
+		
+		// Make sure the user being invited is in the room
 		if (!roomObject.sockets.hasOwnProperty(requested_user)) {
 			var error_message = 'invite requested a user that wasn\'t in the room, command aborted';
 			log(error_message);
@@ -421,7 +428,7 @@ io.sockets.on('connection', function(socket){
 			return;
 		}
 		
-		/* If everything is ok respond to the uninviter that it was successful */
+		// If everything is ok respond to the uninviter that it was successful
 		
 		var success_data = {
 			result: 'success',
@@ -430,7 +437,7 @@ io.sockets.on('connection', function(socket){
 		socket.emit('uninvite_response', success_data);
 
 		
-		/* Tell the uninvitee that they have been uninvited */
+		// Tell the uninvitee that they have been uninvited
 		
 		var success_data = {
 			result: 'success',
@@ -463,7 +470,7 @@ io.sockets.on('connection', function(socket){
 	socket.on('game_start', function(payload){
 		log('game_start with ' + JSON.stringify(payload));
 		
-		/* Check to make sure that a payload was sent */
+		// Check to make sure that a payload was sent
 		if(('undefined' === typeof payload) || !payload){
 		   var error_message = 'game_start had no payload, command aborted';
 			log(error_message);
@@ -474,7 +481,7 @@ io.sockets.on('connection', function(socket){
 			return;
 		}		
 		
-		/* Check that the message can be traced to a username */
+		// Check that the message can be traced to a username
 		var username = players[socket.id].username;
 		if (('undefined' === typeof username) || !username) {
 			var error_message = 'game_start can\'t identify who sent the message.';
@@ -499,7 +506,8 @@ io.sockets.on('connection', function(socket){
 		
 		var room = players[socket.id].room;
 		var roomObject = io.sockets.adapter.rooms[room];
-		/* Make sure the user being invited is in the room */
+		
+		// Make sure the user being invited is in the room
 		if (!roomObject.sockets.hasOwnProperty(requested_user)) {
 			var error_message = 'gamestart requested a user that wasn\'t in the room, command aborted';
 			log(error_message);
@@ -510,9 +518,11 @@ io.sockets.on('connection', function(socket){
 			return;
 		}
 		
-		/* If everything is ok respond to the game_starter that it was successful */
+		// If everything is ok respond to the game_starter that it was successful
 		
-		var game_id = Math.floor((1+Math.random()) * 0x10000.toString(16).substring(1));
+		//var game_id = Math.floor((1+Math.random()) * 0x10000.toString(16).substring(1));
+		var game_id = Math.floor(1+Math.random() * 0x1000.toString(16).substring());
+		
 		var success_data = {
 			result: 'success',
 			socket_id: requested_user,
@@ -521,7 +531,7 @@ io.sockets.on('connection', function(socket){
 		socket.emit('game_start_response', success_data);
 
 		
-		/* Tell the other player to play */
+		// Tell the other player to play
 		
 		var success_data = {
 			result: 'success',
@@ -533,6 +543,62 @@ io.sockets.on('connection', function(socket){
 		log('game_start successful');
 	});
 });
+
+/***********************************/
+/* Code related to the game state */
+
+var games = [];
+
+function create_new_game(){
+	var new_game = {};
+	new_game.player_white = {};
+	new_game.player_black = {};
+	new_game.player_white.socket = '';
+	new_game.player_white.username = '';
+	new_game.player_black.socket = '';
+	new_game.player_black.username = '';
+	
+	var d = new Date();
+	new_game.last_move_time = d.getTime();
+	new_game.whose_turn = 'white';
+	new_game.board = [
+		[' ',' ',' ',' ',' ',' ',' ',' ',],
+		[' ',' ',' ',' ',' ',' ',' ',' ',],
+		[' ',' ',' ',' ',' ',' ',' ',' ',],
+		[' ',' ',' ','w','b',' ',' ',' ',],
+		[' ',' ',' ','b','w',' ',' ',' ',],
+		[' ',' ',' ',' ',' ',' ',' ',' ',],
+		[' ',' ',' ',' ',' ',' ',' ',' ',],
+		[' ',' ',' ',' ',' ',' ',' ',' ',]
+	];
+	return new_game;
+}
+
+function send_game_update(socket, game_id, message){
+	// Check to see if a game with game_id already exists
+	if (('undefined' === typeof games[game_id]) || !games[game_id]) {
+		// No game exists, so make one
+		console.log('No game exists. Creating ' + game_id+' for '+socket.id);
+		games[game_id] = create_new_game();
+	}
+	
+	// Make sure that only 2 people are in the game room
+	
+	// Assign this socket a color
+	
+	// Send game update
+	var success_data = {
+		result: 'success',
+		game: games[game_id],
+		message: message,
+		game_id: game_id
+	};
+	
+	io.in(game_id).emit('game_update', success_data);
+	
+	// Check to see if the game is over
+}
+
 
 
 
