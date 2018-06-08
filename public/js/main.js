@@ -12,7 +12,7 @@ function getURLParameters(whichParam) {
 		}
 	}
 }
-
+ 
 var username = getURLParameters('username'); // Get username info from the url
 if ('undefined' == typeof username || !username){
 	username = 'Anonymous_'+Math.random();
