@@ -8,7 +8,38 @@
 	  
 	  <style>
 		  #header-row {
-			  background-image: url("assets/images/green.png");
+			  background-image: url("assets/images/Blue_Background.png");
+		  }
+		  #white_font {
+			  color: #ffffff;
+		  }
+		  #username {
+			  margin-left: auto;
+			  margin-right: auto;
+		  }
+		  .form-inline {
+			  background-color: green;
+		  }
+		  .form-group {
+			  margin-left: 40%;
+		  }
+		  .form-control {
+			  margin-top: 100px;
+			  padding-bottom: 20px;
+			  margin-bottom: 100px;
+		  }
+		  form.form-inline {
+			  margin: 0;
+			  padding-bottom: 40px;
+		  }
+		  body {
+			margin: 0;
+		  }
+		  .title {
+			  padding-top: 100px;
+		  }
+		  form#header-row.form-inline {
+			  margin: 0;
 		  }
 	  </style>
 	  <script>
@@ -28,15 +59,16 @@
 		
 	  <div class="row" id="header-row">
 		  <div class="col">
-			<h2>Enter Your User Name</h2>
+			<a href="http://localhost:8080/"><h2 id="white_font"><img class="title" src="assets/images/Enter_Your_User_Name.png" alt="Enter Your User Name"></h2></a>
 		  </div>
 	  </div>
 		
 	  <div class="row">
-		<div class="col">
-			<form onSubmit="submitForm(); return false;" class="form-inline">
-				<div class="form-group">
-					<label for="username" class="col-form-label sr-only">Enter your a username</label>
+		<div class="col" id="center123" >
+			<form onSubmit="submitForm(); return false;" class="form-inline" id="header-row" >
+				<div class="form-group" id="blocking">
+					<img src="assets/images/Seahorse_Circle_Name.png" alt="">
+					<label for="username" class="col-form-label sr-only" id="white_color">Enter your a username</label>
 					<input class="form-control" value="" id="username" placeholder="Enter your user name" type="text">
 				</div>
 				<button type="submit" class="btn btn-default btn-primary">Done</button>
